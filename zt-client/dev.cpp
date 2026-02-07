@@ -50,6 +50,22 @@ static bool supportsATASE(const std::string& devPath) {
     return false;
 }
 
+static bool probeNVMe(const std::string& devPath) {
+    std::string out = runCommand("nvme id-ctrl " + devPath + " 2>/dev/null");
+
+    auto pos = out.find("sanicap");
+    if (pos != std::string::npos) {
+        auto hexPos = out.find("0x", pos);
+        if (hexPos != std::string::npos) {
+            unsigned sanicap = std::stoul(
+                out.substr(hexPos + 2), nullptr, 16);
+            if (sanicap != 0)
+                return true;
+        }
+    }
+
+    return false;
+}
 
 
 std::vector<Device> getDevices() {
@@ -112,7 +128,7 @@ std::vector<Device> getDevices() {
             dev.supportedWipeMethods.push_back(WipeMethod::ENCRYPTED_OVERWRITE);
             
             // Heuristic for Firmware Erase
-            if (dev.type == "NVMe") {
+            if (dev.type == "NVMe" && probeNVMe(dev.path)) {
                 dev.supportedWipeMethods.push_back(WipeMethod::FIRMWARE_ERASE);
             } else if (dev.type == "ATA/SCSI" && supportsATASE(dev.path)) {
                 dev.supportedWipeMethods.push_back(WipeMethod::ATA_SECURE_ERASE);
