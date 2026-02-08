@@ -39,6 +39,9 @@ def generate_certificate(device_id, model, size, method, output_file="certificat
     print(f"Simulated IPFS Upload Complete.")
     print(f"IPFS Hash (CID): {mock_ipfs_cid}")
 
+    with open("last_cid.txt", "w") as f:
+        f.write(mock_ipfs_cid)
+
     return mock_ipfs_cid
 
 if __name__ == "__main__":
