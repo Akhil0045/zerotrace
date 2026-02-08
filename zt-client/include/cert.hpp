@@ -3,6 +3,8 @@
 
 #include <string>
 #include <cstdint>
+#include <array>
+#include <nlohmann/json.hpp>
 #include "dev.hpp"
 
 
@@ -25,5 +27,15 @@ struct WipeResult {
 
     std::string tool_version;
 };
+
+std::array<uint8_t, 32> sha256(const std::string& data);
+std::array<uint8_t, 32> deviceIdentityHash(const WipeResult& r);
+std::string generateCertificateJSON(const WipeResult& r);
+nlohmann::json makeChainRequest(
+    const std::array<uint8_t,32>& certHash,
+    const std::array<uint8_t,32>& devHash,
+    uint8_t wipeMethod
+);
+bool recordWipeViaHelper(const nlohmann::json& payload);
 
 #endif

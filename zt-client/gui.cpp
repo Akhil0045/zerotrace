@@ -126,7 +126,18 @@ static void on_confirm_wipe_clicked(GtkButton* btn, gpointer user_data) {
     WipeResult result = wipeDisk(appState.selectedDevice.path, method);
     
     if (result.status == WipeStatus::SUCCESS) {
-        show_status_safe("Wipe Completed Successfully!", false);
+        std::string cert = generateCertificateJSON(result);
+        std::cout << "--- WIPE CERTIFICATE ---\n" << cert << "\n------------------------" << std::endl;
+
+        auto certHash = sha256(cert);
+        auto devHash = deviceIdentityHash(result);
+        auto payload = makeChainRequest(certHash, devHash, static_cast<uint8_t>(result.method));
+
+        if (recordWipeViaHelper(payload)) {
+            show_status_safe("Wipe Success! Certificate recorded on blockchain.", false);
+        } else {
+            show_status_safe("Wipe Success, but Certificate recording failed.", true);
+        }
     } else if(result.status == WipeStatus::FAILURE) {
         show_status_safe("Wipe Failed! Check console/logs.", true);
     }
